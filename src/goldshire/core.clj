@@ -1,14 +1,20 @@
 (ns goldshire.core
-  (:require [docker.core :as docker]))
+  (:require [docker.core :as docker])
+  (:require [docker.image :as image])
+  (:require [docker.container :as container]))
 
-(def client  (make-client "10.0.1.2:4243"))
-(docker/version client)
-(docker/info client)
+(def client  (docker/make-client "127.0.0.1:4243"))
 
-(:require [docker.image :as image])
+(def box
+  (container/create client {:Hostname "127.0.0.1",
+                            :Memory "10m",
+                            :Image "paintedfox/ruby",
+                            :Cmd ["ruby -e", "1 + 1"] }))
+
 
 (defn ruby-eval
   "eval ruby expression on docker"
-  [exp]
-  2)
-
+  [cmd]
+  (container/start client (:Id box))
+  ;;(println (container/inspect client (:Id box)))
+  (slurp (container/attach client (:Id box) :logs true :stdout true :stderr true :stream true)))
