@@ -11,7 +11,7 @@ A Clojure library designed to eval code on High-level programming languages. (Wo
 
 ### Run daemon
 
-    $ sudo docker -H 127.0.0.1:4243  -d &
+    $ sudo docker -H 127.0.0.1:4243 -H unix:///var/run/docker.sock -d &
     $ sudo jsvc  -home /usr/lib/jvm/java-7-oracle \
                  -cp "$(pwd)/target/goldshire-0.1.0-SNAPSHOT-standalone.jar" \
                  -outfile "$(pwd)/out.txt" goldshire.core

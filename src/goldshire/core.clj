@@ -5,13 +5,25 @@
   (:gen-class
     :implements [org.apache.commons.daemon.Daemon]))
 
+(defn ruby-eval
+  "eval ruby expression on docker"
+  [cmd]
+  docker-client/start-ruby-container
+  (println (slurp docker-client/attach-stdout)))
+
+(defn code-eval
+  "handle eval code"
+  [lang, cmd]
+  (cond
+    (= lang "ruby") (ruby-eval cmd)))
+
 (def state (atom {}))
 
 (defn init [args]
   (swap! state assoc :running true))
 
 (defn start []
-  (redis-helper/queue-worker)
+  (redis-helper/queue-worker code-eval)
   (while (:running @state)
     (println "tick")
     (redis-helper/enqueue "code" "puts 1 + 1")
@@ -34,8 +46,3 @@
   (init args)
   (start))
 
-(defn ruby-eval
-  "eval ruby expression on docker"
-  [cmd]
-  docker-client/start-ruby-container
-  (slurp docker-client/attach-stdout))

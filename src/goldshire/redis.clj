@@ -6,10 +6,11 @@
 (defmacro wcar* [& body] `(car/wcar server-conn ~@body))
 
 (defn queue-worker
-  []
+  [callback]
   (car-mq/worker server-conn "code"
    {:handler (fn [{:keys [message attempt]}]
                (println "Received" message)
+               (callback "ruby" message)
                {:status :success})}))
 
 (defn enqueue

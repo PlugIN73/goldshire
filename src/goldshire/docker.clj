@@ -9,9 +9,13 @@
   (container/create client {:Hostname "127.0.0.1",
                             :Memory "10m",
                             :Image "paintedfox/ruby",
-                            :Cmd ["ruby", "-e", "puts 1 + 1"] }))
+                            :Cmd ["ruby", "-e", "puts 1 + b"] }))
 (def start-ruby-container
   (container/start client (:Id box)))
+
+(defn stop-ruby-container
+  [id]
+  (container/stop client id))
 
 (def attach-stdout
   (container/attach client (:Id box) :logs true :stdout true :stderr true :stream true))
