@@ -23,10 +23,9 @@
   (swap! state assoc :running true))
 
 (defn start []
-  (redis-helper/queue-worker code-eval)
   (while (:running @state)
+    (println (redis-helper/get-worker code-eval))
     (println "tick")
-    (redis-helper/enqueue "code" "puts 1 + 1")
     (Thread/sleep 2000)))
 
 (defn stop []

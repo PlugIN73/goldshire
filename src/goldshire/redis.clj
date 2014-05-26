@@ -5,6 +5,10 @@
 (def server-conn {:pool {} :spec {:host "127.0.0.1" :port 6379}})
 (defmacro wcar* [& body] `(car/wcar server-conn ~@body))
 
+(defn get-worker
+  [callback]
+  (wcar* (car/rpop "code")))
+
 (defn queue-worker
   [callback]
   (car-mq/worker server-conn "code"
