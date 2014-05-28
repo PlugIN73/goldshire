@@ -7,7 +7,7 @@
 
 (defn get-worker
   [callback]
-  (wcar* (car/rpop "code")))
+  (callback (wcar* (car/rpop "code"))))
 
 (defn queue-worker
   [callback]

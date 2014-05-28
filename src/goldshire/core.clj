@@ -13,9 +13,15 @@
 
 (defn code-eval
   "handle eval code"
-  [lang, cmd]
-  (cond
-    (= lang "ruby") (ruby-eval cmd)))
+  [params]
+  (println
+    (clojure.string/join
+       (nth
+         (clojure.string/split (nth (clojure.string/split params #",\"") 0) #"\":")
+         1)
+     " ")))
+  ;(cond
+    ;(= lang "ruby") (ruby-eval cmd)))
 
 (def state (atom {}))
 
@@ -24,6 +30,7 @@
 
 (defn start []
   (while (:running @state)
+    (println "tick")
     (println (redis-helper/get-worker code-eval))
     (println "tick")
     (Thread/sleep 2000)))
