@@ -11,17 +11,34 @@
   docker-client/start-ruby-container
   (println (slurp docker-client/attach-stdout)))
 
+
+
+(defn get-code
+  "parse params and return code field"
+  [params]
+  (str
+    (nth
+      (clojure.string/split
+        (nth
+          (clojure.string/split
+            (nth
+              (clojure.string/split (nth (clojure.string/split params #",\"") 0) #"\":")
+              1)
+            #"\"")
+          3)
+        #"\\")
+      0)))
+
 (defn code-eval
   "handle eval code"
   [params]
-  (println
-    (clojure.string/join
-       (nth
-         (clojure.string/split (nth (clojure.string/split params #",\"") 0) #"\":")
-         1)
-     " ")))
-  ;(cond
-    ;(= lang "ruby") (ruby-eval cmd)))
+  (if params
+    (ruby-eval (get-code params))
+    (println "waiting")))
+;" ")))
+;(cond
+;(= lang "ruby") (ruby-eval cmd)))
+;(ruby-eval "puts 1 + 1"))
 
 (def state (atom {}))
 
@@ -31,9 +48,9 @@
 (defn start []
   (while (:running @state)
     (println "tick")
-    (println (redis-helper/get-worker code-eval))
+    (redis-helper/get-worker code-eval)
     (println "tick")
-    (Thread/sleep 2000)))
+    (Thread/sleep 1000)))
 
 (defn stop []
   (swap! state assoc :running false))
