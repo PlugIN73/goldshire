@@ -35,10 +35,6 @@
   (if params
     (ruby-eval (get-code params))
     (println "waiting")))
-;" ")))
-;(cond
-;(= lang "ruby") (ruby-eval cmd)))
-;(ruby-eval "puts 1 + 1"))
 
 (def state (atom {}))
 
