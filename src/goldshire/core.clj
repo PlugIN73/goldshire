@@ -1,6 +1,9 @@
 (ns goldshire.core
   (:require [goldshire.docker :as docker-client])
   (:require [goldshire.redis :as redis-helper])
+  (:require [docker.core :as docker])
+  (:require [docker.image :as image])
+  (:require [docker.container :as container])
   (:import [org.apache.commons.daemon Daemon DaemonContext])
   (:gen-class
     :implements [org.apache.commons.daemon.Daemon]))
@@ -8,10 +11,13 @@
 (defn ruby-eval
   "eval ruby expression on docker"
   [cmd]
-  docker-client/start-ruby-container
-  (println (slurp docker-client/attach-stdout)))
+  (let [box (container/create docker-client/client {:Hostname "127.0.0.1",
+                                                    :Memory "10m",
+                                                    :Image "paintedfox/ruby"
+                                                    :Cmd ["ruby", "-e", cmd]})]
 
-
+    (container/start docker-client/client (:Id box) )
+    (println (slurp (container/attach docker-client/client (:Id box) :logs true :stdout true :stderr true :stream true)))))
 
 (defn get-code
   "parse params and return code field"
