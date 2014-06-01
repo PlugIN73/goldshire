@@ -9,6 +9,11 @@
   [callback]
   (callback (wcar* (car/rpop "code"))))
 
+(defn set-worker
+  [result]
+  (println result)
+  (wcar* (car/lpush "code-result" result)))
+
 (defn queue-worker
   [callback]
   (car-mq/worker server-conn "code"

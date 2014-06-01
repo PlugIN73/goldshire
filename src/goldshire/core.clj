@@ -8,6 +8,10 @@
   (:gen-class
     :implements [org.apache.commons.daemon.Daemon]))
 
+(defn send-result
+  [result]
+  (redis-helper/set-worker result))
+
 (defn ruby-eval
   "eval ruby expression on docker"
   [cmd]
@@ -16,8 +20,9 @@
                                                     :Image "paintedfox/ruby"
                                                     :Cmd ["ruby", "-e", cmd]})]
 
+    (println (type cmd))
     (container/start docker-client/client (:Id box) )
-    (println (slurp (container/attach docker-client/client (:Id box) :logs true :stdout true :stderr true :stream true)))))
+    (send-result (slurp (container/attach docker-client/client (:Id box) :logs true :stdout true :stderr true :stream true)))))
 
 (defn get-code
   "parse params and return code field"
@@ -27,20 +32,19 @@
       (clojure.string/split
         (nth
           (clojure.string/split
-            (nth
-              (clojure.string/split (nth (clojure.string/split params #",\"") 0) #"\":")
-              1)
-            #"\"")
-          3)
-        #"\\")
-      0)))
+            (nth (clojure.string/split params #",\"") 0)
+            #"\":")
+          1)
+        #"\"")
+      1)))
 
 (defn code-eval
   "handle eval code"
   [params]
   (if params
     (ruby-eval (get-code params))
-    (println "waiting")))
+    (println "waiting"))
+  (println "served"))
 
 (def state (atom {}))
 
