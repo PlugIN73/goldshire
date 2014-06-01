@@ -20,23 +20,18 @@
                                                     :Image "paintedfox/ruby"
                                                     :Cmd ["ruby", "-e", cmd]})]
 
-    (println (type cmd))
     (container/start docker-client/client (:Id box) )
     (send-result (slurp (container/attach docker-client/client (:Id box) :logs true :stdout true :stderr true :stream true)))))
 
 (defn get-code
   "parse params and return code field"
   [params]
-  (str
-    (nth
-      (clojure.string/split
-        (nth
-          (clojure.string/split
-            (nth (clojure.string/split params #",\"") 0)
-            #"\":")
-          1)
-        #"\"")
-      1)))
+  (let [code (nth
+              (clojure.string/split
+                (nth (clojure.string/split params #",\"") 0)
+                #"\":")
+              1)]
+    (clojure.core/subs code 1 (- (clojure.core/count code) 1))))
 
 (defn code-eval
   "handle eval code"
