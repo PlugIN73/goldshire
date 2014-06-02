@@ -38,8 +38,7 @@
   [params]
   (if params
     (ruby-eval (get-code params))
-    (println "waiting"))
-  (println "served"))
+    (println "waiting")))
 
 (def state (atom {}))
 
