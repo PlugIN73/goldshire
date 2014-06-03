@@ -10,8 +10,11 @@
     :implements [org.apache.commons.daemon.Daemon]))
 
 (defn send-result
-  [result]
-  (redis-helper/set-worker result))
+  [result, id, callback_url]
+  (let [responce-body (json/write-str (array-map :result result,
+                                                 :id id,
+                                                 :callback_url callback_url))]
+    (redis-helper/set-worker responce-body)))
 
 (defn ruby-eval
   "eval ruby expression on docker"
@@ -19,10 +22,14 @@
   (let [box (container/create docker-client/client {:Hostname "127.0.0.1",
                                                     :Memory "10m",
                                                     :Image "paintedfox/ruby"
-                                                    :Cmd ["ruby", "-e", (get params "code")]})]
+                                                    :Cmd ["ruby", "-e", (get params "code")]})
+        callback_url (get params "callback_url")
+        id (get params "id")]
 
     (container/start docker-client/client (:Id box) )
-    (send-result (slurp (container/attach docker-client/client (:Id box) :logs true :stdout true :stderr true :stream true)))))
+    (send-result (slurp (container/attach docker-client/client (:Id box) :logs true :stdout true :stderr true :stream true))
+                 id
+                 callback_url)))
 
 (defn get-code
   "parse params and return code field"
