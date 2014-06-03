@@ -4,6 +4,7 @@
   (:require [docker.core :as docker])
   (:require [docker.image :as image])
   (:require [docker.container :as container])
+  (:require [clojure.data.json :as json])
   (:import [org.apache.commons.daemon Daemon DaemonContext])
   (:gen-class
     :implements [org.apache.commons.daemon.Daemon]))
@@ -14,11 +15,11 @@
 
 (defn ruby-eval
   "eval ruby expression on docker"
-  [cmd]
+  [params]
   (let [box (container/create docker-client/client {:Hostname "127.0.0.1",
                                                     :Memory "10m",
                                                     :Image "paintedfox/ruby"
-                                                    :Cmd ["ruby", "-e", cmd]})]
+                                                    :Cmd ["ruby", "-e", (get params "code")]})]
 
     (container/start docker-client/client (:Id box) )
     (send-result (slurp (container/attach docker-client/client (:Id box) :logs true :stdout true :stderr true :stream true)))))
@@ -26,18 +27,15 @@
 (defn get-code
   "parse params and return code field"
   [params]
-  (let [code (nth
-              (clojure.string/split
-                (nth (clojure.string/split params #",\"") 0)
-                #"\":")
-              1)]
-    (clojure.core/subs code 1 (- (clojure.core/count code) 1))))
+  (json/read-str params))
 
 (defn code-eval
   "handle eval code"
   [params]
   (if params
-    (ruby-eval (get-code params))
+    (let [parsed-params (get-code params)]
+      (cond
+        (= (get parsed-params "lang") "ruby") (ruby-eval parsed-params)))
     (println "waiting")))
 
 (def state (atom {}))
