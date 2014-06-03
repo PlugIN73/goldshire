@@ -39,6 +39,7 @@
   [params]
   (let [file-name (clojure.string/join "" [(get params "id"),
                                            ".cpp"])
+        result-name (get params "id")
         callback_url (get params "callback_url")
         id (get params "id")]
     (println (sh "touch" file-name))
@@ -47,8 +48,8 @@
                                         (get params "code"),
                                         "'>",
                                         file-name]))
-    (send-result (sh "gcc" file-name)
-                 (:out (sh "cat" file-name))
+    (send-result (sh "gcc" file-name "-o" result-name)
+                 (:out (sh "cat" result-name))
                  id
                  callback_url )))
 
