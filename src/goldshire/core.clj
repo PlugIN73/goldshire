@@ -6,6 +6,7 @@
   (:require [docker.container :as container])
   (:require [clojure.data.json :as json])
   (:import [org.apache.commons.daemon Daemon DaemonContext])
+  (:use [clojure.java.shell :only [sh]])
   (:gen-class
     :implements [org.apache.commons.daemon.Daemon]))
 
@@ -31,6 +32,27 @@
                  id
                  callback_url)))
 
+(defn c-eval
+  "eval c++ expression on docker"
+  [params]
+  (let [file-name (clojure.string/join "" [(get params "id"),
+                                           ".cpp"])]
+    (println (sh "touch" file-name))
+    (sh "sh" "-c" (clojure.string/join " "
+                                       ["echo",
+                                        (get params "code"),
+                                        ">",
+                                        file-name]))
+    (println (clojure.string/join " "
+                                       ["touch",
+                                        file-name,
+                                        "&&"
+                                        "echo",
+                                        (str (get params "code")),
+                                        ">",
+                                        file-name]))
+    (println (sh "gcc" file-name))))
+
 (defn get-code
   "parse params and return code field"
   [params]
@@ -42,7 +64,8 @@
   (if params
     (let [parsed-params (get-code params)]
       (cond
-        (= (get parsed-params "lang") "ruby") (ruby-eval parsed-params)))
+        (= (get parsed-params "lang") "ruby") (ruby-eval parsed-params)
+        (= (get parsed-params "lang") "c++") (c-eval parsed-params)))
     (println "waiting")))
 
 (def state (atom {}))
