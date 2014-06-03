@@ -42,16 +42,32 @@
         result-name (get params "id")
         callback_url (get params "callback_url")
         id (get params "id")]
-    (println (sh "touch" file-name))
     (sh "sh" "-c" (clojure.string/join " "
                                        ["echo '",
                                         (get params "code"),
                                         "'>",
                                         file-name]))
-    (send-result (sh "gcc" file-name "-o" result-name)
-                 (:out (sh "cat" result-name))
-                 id
-                 callback_url )))
+    (let [f-compile (sh "gcc" file-name "-o" result-name)]
+      (if (= (:exit f-compile) 0)
+            ((sh "sh" "-c" (clojure.string/join " "
+                                                ["chmod +x"
+                                                 result-name]))
+             (let [run (sh "sh" "-c" (clojure.string/join ""
+                                                          ["./"
+                                                           result-name]))]
+               (if (:err run)
+                 (send-result (:err run)
+                              (:out (sh "cat" result-name))
+                              id
+                              callback_url)
+                 (send-result (:out run)
+                              (:out (sh "cat" result-name))
+                              id
+                              callback_url))))
+               (send-result (:err f-compile)
+                          (:out (sh "cat" result-name))
+                          id
+                          callback_url )))))
 
 (defn get-code
   "parse params and return code field"
