@@ -11,8 +11,9 @@
     :implements [org.apache.commons.daemon.Daemon]))
 
 (defn send-result
-  [result, id, callback_url]
+  [result, file-content, id, callback_url]
   (let [responce-body (json/write-str (array-map :result result,
+                                                 :file-content file-content,
                                                  :id id,
                                                  :callback_url callback_url))]
     (redis-helper/set-worker responce-body)))
@@ -23,12 +24,13 @@
   (let [box (container/create docker-client/client {:Hostname "127.0.0.1",
                                                     :Memory "10m",
                                                     :Image "paintedfox/ruby"
-                                                    :Cmd ["ruby", "-e", (get params "code")]})
+                                                    :Cmd ["-a", "ruby", "-e", (get params "code")]})
         callback_url (get params "callback_url")
         id (get params "id")]
 
     (container/start docker-client/client (:Id box) )
     (send-result (slurp (container/attach docker-client/client (:Id box) :logs true :stdout true :stderr true :stream true))
+                 (get params "code")
                  id
                  callback_url)))
 
@@ -36,22 +38,19 @@
   "eval c++ expression on docker"
   [params]
   (let [file-name (clojure.string/join "" [(get params "id"),
-                                           ".cpp"])]
+                                           ".cpp"])
+        callback_url (get params "callback_url")
+        id (get params "id")]
     (println (sh "touch" file-name))
     (sh "sh" "-c" (clojure.string/join " "
-                                       ["echo",
+                                       ["echo '",
                                         (get params "code"),
-                                        ">",
+                                        "'>",
                                         file-name]))
-    (println (clojure.string/join " "
-                                       ["touch",
-                                        file-name,
-                                        "&&"
-                                        "echo",
-                                        (str (get params "code")),
-                                        ">",
-                                        file-name]))
-    (println (sh "gcc" file-name))))
+    (send-result (sh "gcc" file-name)
+                 (:out (sh "cat" file-name))
+                 id
+                 callback_url )))
 
 (defn get-code
   "parse params and return code field"
