@@ -24,7 +24,7 @@
   (let [box (container/create docker-client/client {:Hostname "127.0.0.1",
                                                     :Memory "10m",
                                                     :Image "paintedfox/ruby"
-                                                    :Cmd ["-a", "ruby", "-e", (get params "code")]})
+                                                    :Cmd ["ruby", "-e", (get params "code")]})
         callback_url (get params "callback_url")
         id (get params "id")]
 
